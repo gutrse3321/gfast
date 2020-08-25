@@ -1860,6 +1860,64 @@
                 }
             }
         },
+        "/system/tools/gen/batchGenCode": {
+            "post": {
+                "security": [
+                    {
+                        "": []
+                    }
+                ],
+                "description": "代码生成,返回一个byte数据",
+                "tags": [
+                    "系统工具"
+                ],
+                "summary": "代码生成",
+                "parameters": [
+                    {
+                        "description": "tables",
+                        "name": "tables",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "0": {
+                        "description": "[]",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/response.Response"
+                            }
+                        },
+                        "headers": {
+                            "Access-Control-Allow-Origin": {
+                                "type": "string",
+                                "description": " \"*"
+                            },
+                            "Access-Control-Expose-Headers": {
+                                "type": "string",
+                                "description": " \"Content-Disposition"
+                            },
+                            "Content-Disposition": {
+                                "type": "string",
+                                "description": " \"attachment; filename=\\\"gfast.zip\\"
+                            },
+                            "Content-Length": {
+                                "type": "string",
+                                "description": " \"len(bytes)"
+                            },
+                            "Content-Type": {
+                                "type": "string",
+                                "description": "application/octet-stream; charset=UTF-8"
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "/system/tools/gen/columnList": {
             "post": {
                 "security": [

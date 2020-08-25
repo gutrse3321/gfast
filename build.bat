@@ -21,8 +21,8 @@ rem @echo off
 echo copy to dist
 copy .\server %Dist%
 del .\server
-rem md %Dist%\Config
-rem xcopy .\Config\*.* %Dist%\Config
+md %Dist%\swagger
+xcopy .\swagger\swagger.json %Dist%\swagger
 rem del %Dist%\Config\.gitkeep
 
 cls

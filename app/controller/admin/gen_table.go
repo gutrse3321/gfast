@@ -249,10 +249,16 @@ func (c *Gen) Preview(r *ghttp.Request) {
 }
 
 // @Summary 代码生成
-// @Description 代码生成
+// @Description 代码生成,返回一个byte数据
 // @Tags 系统工具
-// @Param tableId body integer   true "tableId"
-// @Success 0 {object} response.Response "{"code": 200, "data": [...]}"
+// @Param tables body string   true "tables"
+// @Success 0 {array} response.Response "[]"
+// @Header 0 {string} Access-Control-Allow-Origin "*"
+// @Header 0 {string} Access-Control-Allow-Origin "*"
+// @Header 0 {string} Access-Control-Expose-Headers "Content-Disposition"
+// @Header 0 {string} Content-Disposition "attachment; filename=\"gfast.zip\""
+// @Header 0 {string} Content-Length "len(bytes)"
+// @Header 0 {string} Content-Type "application/octet-stream; charset=UTF-8"
 // @Router /system/tools/gen/batchGenCode [post]
 // @Security
 func (c *Gen) BatchGenCode(r *ghttp.Request) {
