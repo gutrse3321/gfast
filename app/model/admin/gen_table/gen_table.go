@@ -189,3 +189,25 @@ func SelectRecordById(tableId int64) (entityExtend *EntityExtend, err error) {
 	entityExtend.Columns = columns
 	return
 }
+
+//TODO 根据表名获取实体
+func SelectRecordByTableName(tableName string) (entityExtend *EntityExtend, err error) {
+	entity, err := Model.FindOne("table_name = ?", tableName)
+	if err != nil {
+		g.Log().Error(err)
+		err = gerror.New("获取表格信息出错")
+	}
+
+	m := gconv.Map(entity)
+	gconv.Struct(m, &entityExtend)
+
+	//表字段数据
+	var columns []*gen_table_column.Entity
+	columns, err = gen_table_column.SelectGenTableColumnListByTableId(entity.TableId)
+	if err != nil {
+		return
+	}
+	entityExtend.Columns = columns
+
+	return
+}

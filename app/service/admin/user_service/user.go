@@ -223,6 +223,9 @@ func GetAdminMenusByRoleIds(roleIds []int) (menus g.List, err error) {
 	menuIds := map[int64]int64{}
 	for _, roleId := range roleIds {
 		//查询当前权限
+		//TODO 2020-8-20 赵振昇 gp获取的数据库casbin_rule表没有新添加的菜单的v1字段值
+		//TODO 暂时没看到有更新casbin_rule操作，所有menuIds没有新的菜单的id，如果是config.toml配置的超级管理员则没有这个问题
+		//TODO 更新 要在权限管理——角色管理——修改——保存 这里去写入casbin_rule表中
 		gp := enforcer.GetFilteredPolicy(0, fmt.Sprintf("g_%d", roleId))
 		for _, p := range gp {
 			mid := gconv.Int64(gstr.SubStr(p[1], 2))
@@ -236,7 +239,8 @@ func GetAdminMenusByRoleIds(roleIds []int) (menus g.List, err error) {
 	}
 	roleMenus := make(g.List, 0, len(allMenus))
 	for _, v := range allMenus {
-		if _, ok := menuIds[gconv.Int64(v.Id)]; gstr.Equal(v.Condition, "nocheck") || ok {
+		_, ok := menuIds[gconv.Int64(v.Id)]
+		if gstr.Equal(v.Condition, "nocheck") || ok {
 			roleMenu := gconv.Map(v)
 			roleMenu = setMenuMap(roleMenu, v)
 			roleMenus = append(roleMenus, roleMenu)

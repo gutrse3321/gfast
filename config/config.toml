@@ -1,10 +1,10 @@
 # 数据库连接
 [database]
     type    =   "mysql"
-    host    =   "192.168.0.212"
+    host    =   "127.0.0.1"
     port    =   "3306"
-    user    =   "devuser"
-    pass    =   "123456"
+    user    =   "root"
+    pass    =   "111111"
     name    =   "gfast"
     charset   = "utf8mb4" #数据库编码
     maxIdle      = "10" #连接池最大闲置的连接数
@@ -29,7 +29,7 @@
 
 # Redis数据库配置
 [redis]
-    default = "127.0.0.1:6379,1"
+    default = "207.148.105.249:6379,1,redis@753159"
 
 #jwt配置
 [gToken]

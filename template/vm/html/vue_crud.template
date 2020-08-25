@@ -86,7 +86,8 @@
           @click="handleDelete"
         >删除</el-button>
       </el-col>
-	  <right-toolbar :showSearch.sync="showSearch" @queryTable="getList"></right-toolbar>
+      <!-- 2020-8-20 赵振昇 这里生成的标签，vue中没有这个组件 -->
+	  <!-- <right-toolbar :showSearch.sync="showSearch" @queryTable="getList"></right-toolbar> -->
     </el-row>
 
     <el-table v-loading="loading" :data="{{.table.BusinessName}}List" @selection-change="handleSelectionChange">
@@ -298,8 +299,8 @@ export default {
         getList() {
           this.loading = true;
           list{{.table.BusinessName|UcFirst}}(this.queryParams).then(response => {
-            this.{{.table.BusinessName}}List = response.rows;
-            this.total = response.total;
+            this.{{.table.BusinessName}}List = response.data.list;
+            this.total = response.data.total;
             this.loading = false;
           });
         },

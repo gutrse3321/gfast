@@ -487,6 +487,12 @@ func SelectRecordById(tableId int64) (entity *gen_table.EntityExtend, err error)
 	return
 }
 
+//TODO 根据表名获取实体
+func SelectRecordByTableName(tableName string) (entity *gen_table.EntityExtend, err error) {
+	entity, err = gen_table.SelectRecordByTableName(tableName)
+	return
+}
+
 //设置主键列信息
 func SetPkColumn(table *gen_table.EntityExtend, columns []*gen_table_column.Entity) {
 	for _, column := range columns {
