@@ -1,6 +1,10 @@
 package gen_service
 
 import (
+	"archive/zip"
+	"bytes"
+	"errors"
+	"fmt"
 	"gfast/app/model/admin/gen_table"
 	"gfast/app/model/admin/gen_table_column"
 	"github.com/gogf/gf/database/gdb"
@@ -8,6 +12,9 @@ import (
 	"github.com/gogf/gf/errors/gerror"
 	"github.com/gogf/gf/frame/g"
 	"github.com/gogf/gf/os/gtime"
+	"github.com/gogf/gf/os/gview"
+	"github.com/gogf/gf/text/gregex"
+	"github.com/gogf/gf/text/gstr"
 	"github.com/gogf/gf/util/gconv"
 	"strings"
 )
@@ -487,9 +494,156 @@ func SelectRecordById(tableId int64) (entity *gen_table.EntityExtend, err error)
 	return
 }
 
-//TODO 根据表名获取实体
+//TODO 2020-8-24 根据表名获取实体
 func SelectRecordByTableName(tableName string) (entity *gen_table.EntityExtend, err error) {
 	entity, err = gen_table.SelectRecordByTableName(tableName)
+	return
+}
+
+//TODO 2020-8-25 目录及文件名和代码结构体
+type DirCode struct {
+	Name, Body string
+}
+
+//TODO 2020-8-25 只下载生成一个表
+func DownloadOnce(name string) ([]byte, error) {
+	return generateCode(name)
+}
+
+//TODO 2020-8-25 下载多个生成的表到一个zip包
+func DownloadMulti(tables []string) ([]byte, error) {
+	//开始写入zip包
+	buf := new(bytes.Buffer)
+	w := zip.NewWriter(buf)
+
+	for _, table := range tables {
+		f, err := w.Create("/" + table + ".zip")
+		if err != nil {
+			return nil, err
+		}
+
+		zipStream, err := generateCode(table)
+		if err != nil {
+			return nil, err
+		}
+
+		_, err = f.Write(zipStream)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	err := w.Close()
+	if err != nil {
+		return nil, err
+	}
+
+	return buf.Bytes(), err
+}
+
+//TODO 2020-8-25 构建已生成的目录及文件名和代码的结构体数组
+func generateCode(tableName string) ([]byte, error) {
+	entity, err := SelectRecordByTableName(tableName)
+	if err != nil {
+		//response.FailJson(true, r, err.Error())
+		return nil, err
+	}
+	if entity == nil {
+		//response.FailJson(true, r, "表格数据不存在")
+		return nil, errors.New("表格数据不存在")
+	}
+	SetPkColumn(entity, entity.Columns)
+
+	controllerKey := fmt.Sprintf("/app/controller/%s/%s_controller.go", entity.ModuleName, entity.BusinessName)
+	controllerValue := ""
+	serviceKey := fmt.Sprintf("/app/service/%s/%s_service/%s.go", entity.ModuleName, entity.BusinessName, entity.BusinessName)
+	serviceValue := ""
+	modelKey := fmt.Sprintf("/app/model/%s/%s/%s_model.go", entity.ModuleName, entity.BusinessName, entity.BusinessName)
+	modelValue := ""
+	apiJsKey := fmt.Sprintf("/vue/src/api/%s/%s/index.js", entity.ModuleName, entity.BusinessName)
+	apiJsValue := ""
+	vueKey := fmt.Sprintf("/vue/src/views/%s/%s/index.vue", entity.ModuleName, entity.BusinessName)
+	vueValue := ""
+
+	view := gview.New()
+	view.BindFuncMap(g.Map{
+		"UcFirst": func(str string) string {
+			return gstr.UcFirst(str)
+		},
+		"add": func(a, b int) int {
+			return a + b
+		},
+	})
+	view.SetConfigWithMap(g.Map{
+		"Paths":      []string{"template"},
+		"Delimiters": []string{"{{", "}}"},
+	})
+	//树形菜单选项
+	var options g.Map
+	if entity.TplCategory == "tree" {
+		options = gjson.New(entity.Options).ToMap()
+	}
+	if tmpController, err := view.Parse("vm/go/"+entity.TplCategory+"/controller.template", g.Map{"table": entity}); err == nil {
+		controllerValue = tmpController
+	}
+	if tmpService, err := view.Parse("vm/go/"+entity.TplCategory+"/service.template", g.Map{"table": entity, "options": options}); err == nil {
+		serviceValue = tmpService
+	}
+	if tmpModel, err := view.Parse("vm/go/"+entity.TplCategory+"/model.template", g.Map{"table": entity}); err == nil {
+		modelValue = tmpModel
+		modelValue, err = trimBreak(modelValue)
+	}
+	if tmpJs, err := view.Parse("vm/html/js.template", g.Map{"table": entity}); err == nil {
+		apiJsValue = tmpJs
+	}
+	if tmpVue, err := view.Parse("vm/html/vue_"+entity.TplCategory+".template", g.Map{"table": entity, "options": options}); err == nil {
+		vueValue = tmpVue
+		vueValue, err = trimBreak(vueValue)
+	}
+
+	bytes, err := zipCompress([]DirCode{
+		{controllerKey, controllerValue},
+		{serviceKey, serviceValue},
+		{modelKey, modelValue},
+		{apiJsKey, apiJsValue},
+		{vueKey, vueValue},
+	})
+
+	return bytes, err
+}
+
+//TODO 2020-8-25 生成压缩流
+func zipCompress(files []DirCode) ([]byte, error) {
+	//开始写入zip包
+	buf := new(bytes.Buffer)
+	w := zip.NewWriter(buf)
+
+	for _, file := range files {
+		f, err := w.Create(file.Name)
+		if err != nil {
+			return nil, err
+		}
+
+		_, err = f.Write([]byte(file.Body))
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	err := w.Close()
+	if err != nil {
+		return nil, err
+	}
+
+	return buf.Bytes(), nil
+}
+
+//剔除多余的换行
+func trimBreak(str string) (s string, err error) {
+	var b []byte
+	if b, err = gregex.Replace("(([\\s\t]*)\r?\n){2,}", []byte("$2\n"), []byte(str)); err == nil {
+		s = gconv.String(b)
+	}
 	return
 }
 
