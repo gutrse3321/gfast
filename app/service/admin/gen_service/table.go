@@ -596,6 +596,11 @@ func generateCode(tableName string, isMulti bool) ([]byte, error) {
 	serviceValue := ""
 	modelKey := fmt.Sprintf("temp/app/model/%s/%s/%s.go", entity.ModuleName, entity.BusinessName, entity.BusinessName)
 	modelValue := ""
+	modelExtendKey := fmt.Sprintf("temp/app/model/%s/%s/%s_model.go", entity.ModuleName, entity.BusinessName, entity.BusinessName)
+	modelExtendValue := ""
+	entityKey := fmt.Sprintf("temp/app/model/%s/%s/%s_entity.go", entity.ModuleName, entity.BusinessName, entity.BusinessName)
+	entityValue := ""
+
 	apiJsKey := fmt.Sprintf("temp/vue/src/api/%s/%s/index.js", entity.ModuleName, entity.BusinessName)
 	apiJsValue := ""
 	vueKey := fmt.Sprintf("temp/vue/src/views/%s/%s/index.vue", entity.ModuleName, entity.BusinessName)
@@ -629,6 +634,15 @@ func generateCode(tableName string, isMulti bool) ([]byte, error) {
 		modelValue = tmpModel
 		modelValue, err = trimBreak(modelValue)
 	}
+	if tmpModelEx, err := view.Parse("vm/go/"+entity.TplCategory+"/model_extend.template", g.Map{"table": entity}); err == nil {
+		modelExtendValue = tmpModelEx
+		modelExtendValue, err = trimBreak(modelExtendValue)
+	}
+	if tmpEntity, err := view.Parse("vm/go/"+entity.TplCategory+"/entity.template", g.Map{"table": entity}); err == nil {
+		entityValue = tmpEntity
+		entityValue, err = trimBreak(entityValue)
+	}
+
 	if tmpJs, err := view.Parse("vm/html/js.template", g.Map{"table": entity}); err == nil {
 		apiJsValue = tmpJs
 	}
@@ -642,6 +656,8 @@ func generateCode(tableName string, isMulti bool) ([]byte, error) {
 		{controllerKey, controllerValue},
 		{serviceKey, serviceValue},
 		{modelKey, modelValue},
+		{modelExtendKey, modelExtendValue},
+		{entityKey, entityValue},
 		{apiJsKey, apiJsValue},
 		{vueKey, vueValue},
 	}

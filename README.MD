@@ -32,9 +32,9 @@
 
 其中jwt配置
 
+```toml
 [gToken]
-
-    CacheMode = 2 此处若使用了redis配置为2 若没使用redis配置1
+    CacheMode = 2 # 此处若使用了redis配置为2 若没使用redis配置1
     CacheKey = "GToken:"
     Timeout = 0
     MaxRefresh = 0
@@ -42,6 +42,7 @@
     EncryptKey = "koi29a83idakguqjq29asd9asd8a7jhq"
     AuthFailMsg = "登录超时，请重新登录"
     MultiLogin = true
+```
 
 ##运行
 go run main.go 直接访问http://localhost:8200

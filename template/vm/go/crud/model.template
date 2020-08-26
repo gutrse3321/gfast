@@ -58,7 +58,7 @@ func GetByID(id int64) (*Entity, error) {
 // AddSave 添加
 func AddSave(req *AddReq) error {
 	entity:= new(Entity)
-	{{range $index, $column := .table.Columns}} {{if eq $column.IsInsert "1"}}
+	{{range $index, $column := .table.Columns}} {{if and (eq $column.IsInsert "1") (ne $column.IsPk "1")}}
 	entity.{{$column.GoField}} = req.{{$column.GoField}}{{end}} {{end}}
 
 	result, err := entity.Insert()

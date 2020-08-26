@@ -11,7 +11,7 @@ import (
 )
 
 //数据库字符串类型
-var COLUMNTYPE_STR = []string{"char", "varchar", "narchar", "varchar2", "tinytext", "text", "mediumtext", "longtext"}
+var COLUMNTYPE_STR = []string{"char", "varchar", "narchar", "varchar2", "tinytext", "text", "mediumtext", "longtext", "enum"}
 
 //数据库时间类型
 var COLUMNTYPE_TIME = []string{"datetime", "time", "date", "timestamp"}
