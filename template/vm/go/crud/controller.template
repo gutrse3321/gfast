@@ -5,6 +5,8 @@
 package {{.table.ModuleName}}
 
 import (
+	"gfast/hook"
+	"gfast/middleWare"
 	"github.com/gogf/gf/frame/g"
 	"github.com/gogf/gf/net/ghttp"
 	{{.table.BusinessName}}Model "{{.table.PackageName}}/app/model/{{.table.ModuleName}}/{{.table.BusinessName}}"
@@ -12,9 +14,22 @@ import (
 	"{{.table.PackageName}}/library/response"
 )
 
+func init() {
+	s := g.Server()
+	group := s.Group("/")
+
+	group.Group("/{{.table.ModuleName}}", func(group *ghttp.RouterGroup) {
+		group.Middleware(middleWare.Auth) //后台权限验证
+		//后台操作日志记录
+		group.Hook("/*", ghttp.HOOK_AFTER_OUTPUT, hook.OperationLog)
+
+		//权限管理
+		group.ALL("/{{.table.BusinessName}}", new({{.table.BusinessName|UcFirst}}))
+	})
+}
+
 //控制器
 type {{.table.BusinessName|UcFirst}} struct{}
-
 
 //列表页
 func (c *{{.table.BusinessName|UcFirst}}) List(r *ghttp.Request) {
@@ -31,8 +46,8 @@ func (c *{{.table.BusinessName|UcFirst}}) List(r *ghttp.Request) {
 	}
 	result := g.Map{
 		"currentPage": page,
-		"total":       total,
-		"list":        list,
+		"total":	   total,
+		"list":		list,
 	}
 	response.SusJson(true, r, "获取列表数据成功", result)
 }
