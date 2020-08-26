@@ -11,11 +11,15 @@ import (
 	"github.com/gogf/gf/encoding/gjson"
 	"github.com/gogf/gf/errors/gerror"
 	"github.com/gogf/gf/frame/g"
+	"github.com/gogf/gf/os/gfile"
 	"github.com/gogf/gf/os/gtime"
 	"github.com/gogf/gf/os/gview"
 	"github.com/gogf/gf/text/gregex"
 	"github.com/gogf/gf/text/gstr"
 	"github.com/gogf/gf/util/gconv"
+	"io"
+	"os"
+	"path/filepath"
 	"strings"
 )
 
@@ -319,7 +323,9 @@ func InitTable(table *gen_table.Entity, operName string) {
 	table.ClassName = ConvertClassName(table.TableName)
 	table.PackageName = g.Cfg().GetString("gen.packageName")
 	table.ModuleName = g.Cfg().GetString("gen.moduleName")
-	table.BusinessName = GetBusinessName(table.TableName)
+	//TODO 2020-8-26 取表全名
+	//table.BusinessName = GetBusinessName(table.TableName)
+	table.BusinessName = table.TableName
 	table.FunctionName = strings.ReplaceAll(table.TableComment, "表", "")
 	table.FunctionAuthor = g.Cfg().GetString("gen.author")
 	table.CreateBy = operName
@@ -507,42 +513,72 @@ type DirCode struct {
 
 //TODO 2020-8-25 只下载生成一个表
 func DownloadOnce(name string) ([]byte, error) {
-	return generateCode(name)
+	return generateCode(name, false)
 }
 
 //TODO 2020-8-25 下载多个生成的表到一个zip包
+//TODO 2020-8-26 需要放在同一个文件夹下
 func DownloadMulti(tables []string) ([]byte, error) {
-	//开始写入zip包
-	buf := new(bytes.Buffer)
-	w := zip.NewWriter(buf)
+	curDir := "temp"
+	if gfile.Exists(curDir) {
+		gfile.Remove(curDir)
+	}
 
 	for _, table := range tables {
-		f, err := w.Create("/" + table + ".zip")
-		if err != nil {
-			return nil, err
-		}
-
-		zipStream, err := generateCode(table)
-		if err != nil {
-			return nil, err
-		}
-
-		_, err = f.Write(zipStream)
+		_, err := generateCode(table, true)
 		if err != nil {
 			return nil, err
 		}
 	}
 
-	err := w.Close()
+	//开始写入zip包
+	zipFile, err := os.Create("gfast.zip")
+	if err != nil {
+		return nil, err
+	}
+	defer zipFile.Close()
+
+	w := zip.NewWriter(zipFile)
+	defer w.Close()
+
+	walker := func(path string, info os.FileInfo, err error) error {
+		if err != nil {
+			return err
+		}
+
+		if info.IsDir() {
+			return nil
+		}
+
+		file, err := os.Open(path)
+		if err != nil {
+			return err
+		}
+		defer file.Close()
+
+		f, err := w.Create(path)
+		if err != nil {
+			return err
+		}
+
+		_, err = io.Copy(f, file)
+		if err != nil {
+			return err
+		}
+
+		return nil
+	}
+
+	err = filepath.Walk(curDir, walker)
 	if err != nil {
 		return nil, err
 	}
 
-	return buf.Bytes(), err
+	return gfile.GetBytes("gfast.zip"), err
 }
 
 //TODO 2020-8-25 构建已生成的目录及文件名和代码的结构体数组
-func generateCode(tableName string) ([]byte, error) {
+func generateCode(tableName string, isMulti bool) ([]byte, error) {
 	entity, err := SelectRecordByTableName(tableName)
 	if err != nil {
 		//response.FailJson(true, r, err.Error())
@@ -554,15 +590,15 @@ func generateCode(tableName string) ([]byte, error) {
 	}
 	SetPkColumn(entity, entity.Columns)
 
-	controllerKey := fmt.Sprintf("/app/controller/%s/%s_controller.go", entity.ModuleName, entity.BusinessName)
+	controllerKey := fmt.Sprintf("temp/app/controller/%s/%s_controller.go", entity.ModuleName, entity.BusinessName)
 	controllerValue := ""
-	serviceKey := fmt.Sprintf("/app/service/%s/%s_service/%s.go", entity.ModuleName, entity.BusinessName, entity.BusinessName)
+	serviceKey := fmt.Sprintf("temp/app/service/%s/%s_service/%s.go", entity.ModuleName, entity.BusinessName, entity.BusinessName)
 	serviceValue := ""
-	modelKey := fmt.Sprintf("/app/model/%s/%s/%s_model.go", entity.ModuleName, entity.BusinessName, entity.BusinessName)
+	modelKey := fmt.Sprintf("temp/app/model/%s/%s/%s.go", entity.ModuleName, entity.BusinessName, entity.BusinessName)
 	modelValue := ""
-	apiJsKey := fmt.Sprintf("/vue/src/api/%s/%s/index.js", entity.ModuleName, entity.BusinessName)
+	apiJsKey := fmt.Sprintf("temp/vue/src/api/%s/%s/index.js", entity.ModuleName, entity.BusinessName)
 	apiJsValue := ""
-	vueKey := fmt.Sprintf("/vue/src/views/%s/%s/index.vue", entity.ModuleName, entity.BusinessName)
+	vueKey := fmt.Sprintf("temp/vue/src/views/%s/%s/index.vue", entity.ModuleName, entity.BusinessName)
 	vueValue := ""
 
 	view := gview.New()
@@ -601,15 +637,43 @@ func generateCode(tableName string) ([]byte, error) {
 		vueValue, err = trimBreak(vueValue)
 	}
 
-	bytes, err := zipCompress([]DirCode{
+	var bytes []byte
+	dirCodeArr := []DirCode{
 		{controllerKey, controllerValue},
 		{serviceKey, serviceValue},
 		{modelKey, modelValue},
 		{apiJsKey, apiJsValue},
 		{vueKey, vueValue},
-	})
+	}
+	if isMulti {
+		bytes, err = makeFolderFiles(dirCodeArr)
+	} else {
+		bytes, err = zipCompress(dirCodeArr)
+	}
 
 	return bytes, err
+}
+
+//TODO 2020-8-26 生成本地文件流
+func makeFolderFiles(files []DirCode) ([]byte, error) {
+	//获取当前运行时目录
+	curDir, err := os.Getwd()
+	if err != nil {
+		return nil, err
+	}
+
+	for _, file := range files {
+		fileName := strings.Join([]string{curDir, "/", file.Name}, "")
+		if !gfile.Exists(fileName) {
+			f, err := gfile.Create(fileName)
+			if err == nil {
+				f.WriteString(file.Body)
+			}
+			f.Close()
+		}
+	}
+
+	return gfile.GetBytes(curDir + "/temp"), nil
 }
 
 //TODO 2020-8-25 生成压缩流

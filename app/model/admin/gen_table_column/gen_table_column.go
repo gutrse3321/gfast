@@ -17,7 +17,7 @@ var COLUMNTYPE_STR = []string{"char", "varchar", "narchar", "varchar2", "tinytex
 var COLUMNTYPE_TIME = []string{"datetime", "time", "date", "timestamp"}
 
 //数据库数字类型
-var COLUMNTYPE_NUMBER = []string{"tinyint", "smallint", "mediumint", "int", "number", "integer", "bigint", "float", "float", "double", "decimal"}
+var COLUMNTYPE_NUMBER = []string{"tinyint", "smallint", "mediumint", "int", "number", "integer", "bigint", "float", "float", "double", "decimal", "int unsigned", "bigint unsigned", "tinyint unsigned"}
 
 //页面不需要编辑字段
 var COLUMNNAME_NOT_EDIT = []string{"id", "create_by", "create_time", "del_flag", "update_by", "update_time"}

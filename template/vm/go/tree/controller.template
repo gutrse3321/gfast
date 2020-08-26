@@ -14,6 +14,20 @@ import (
     "github.com/gogf/gf/util/gvalid"
 )
 
+func init() {
+	s := g.Server()
+	group := s.Group("/")
+
+	group.Group("/{{.table.ModuleName}}", func(group *ghttp.RouterGroup) {
+		group.Middleware(middleWare.Auth) //后台权限验证
+		//后台操作日志记录
+		group.Hook("/*", ghttp.HOOK_AFTER_OUTPUT, hook.OperationLog)
+
+		//权限管理
+		group.ALL("/{{.table.BusinessName}}", new({{.table.BusinessName|UcFirst}}))
+	})
+}
+
 //控制器
 type {{.table.BusinessName|UcFirst}} struct{}
 

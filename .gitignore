@@ -21,3 +21,5 @@ main
 tmp
 public/resource/pub_upload/
 /dist/
+/temp/
+/gfast.zip

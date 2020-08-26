@@ -12,6 +12,7 @@ import (
 	{{.table.BusinessName}}Model "{{.table.PackageName}}/app/model/{{.table.ModuleName}}/{{.table.BusinessName}}"
 	{{.table.BusinessName}}Service "{{.table.PackageName}}/app/service/{{.table.ModuleName}}/{{.table.BusinessName}}_service"
 	"{{.table.PackageName}}/library/response"
+	"github.com/gogf/gf/util/gvalid"
 )
 
 func init() {
@@ -23,7 +24,6 @@ func init() {
 		//后台操作日志记录
 		group.Hook("/*", ghttp.HOOK_AFTER_OUTPUT, hook.OperationLog)
 
-		//权限管理
 		group.ALL("/{{.table.BusinessName}}", new({{.table.BusinessName|UcFirst}}))
 	})
 }
