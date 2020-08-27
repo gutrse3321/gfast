@@ -8,6 +8,11 @@ package {{.table.BusinessName}}
 import (
 	"database/sql"
 	"github.com/gogf/gf/database/gdb"
+	{{ $var1 := false }}
+	{{range $index, $column := .table.Columns}}
+    {{if eq $column.GoType "Time"}} {{$var1 = true}} {{end}}
+    {{end}}
+    {{if $var1 }} "github.com/gogf/gf/os/gtime" {{end}}
 )
 
 // Entity is the golang structure for table {{.table.TableName}}.

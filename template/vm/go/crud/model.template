@@ -8,6 +8,11 @@ package {{.table.BusinessName}}
 import (
 	"github.com/gogf/gf/errors/gerror"
 	"github.com/gogf/gf/frame/g"
+	{{ $var1 := false }}
+	{{range $index, $column := .table.Columns}}
+	{{if and (eq $column.GoType "Time") (ne $column.GoField "CreateTime") (ne $column.GoField "UpdateTime")}}{{$var1 = true}}{{end}}
+	{{end}}
+	{{if $var1 }}"github.com/gogf/gf/os/gtime"{{end}}
 )
 
 {{$pk:=""}}
@@ -43,7 +48,7 @@ type SelectPageReq struct { {{range $index, $column := .table.Columns}} {{if eq 
 }
 
 // GetPlugAdByID 根据ID查询记录
-func GetByID(id int64) (*Entity, error) {
+func GetByID(id int) (*Entity, error) {
 	entity, err := Model.FindOne(id)
 	if err != nil {
 		g.Log().Error(err)
@@ -102,7 +107,7 @@ func EditSave(req *EditReq) error {
 }
 
 // 分页查询,返回值total总记录数,page当前页
-func SelectListByPage(req *SelectPageReq) (total int, page int64, list []*Entity, err error) {
+func SelectListByPage(req *SelectPageReq) (total int, page int, list []*Entity, err error) {
 	model := Model
 	if req != nil {
 		{{range $index, $column := .table.Columns}} {{if eq $column.IsQuery "1"}}

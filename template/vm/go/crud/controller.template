@@ -90,7 +90,7 @@ func (c *{{.table.BusinessName|UcFirst}}) Edit(r *ghttp.Request) {
 	}
 	// 不是post提交的请求就到修改页面后查询出要修改的记录
 	id := r.GetInt("id")
-	params, err := {{.table.BusinessName}}Service.GetByID(int64(id))
+	params, err := {{.table.BusinessName}}Service.GetByID(id)
 	if err != nil {
 		response.FailJson(true, r, err.Error())
 	}

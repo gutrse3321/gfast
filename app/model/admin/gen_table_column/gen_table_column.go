@@ -8,6 +8,7 @@ import (
 	"github.com/gogf/gf/database/gdb"
 	"github.com/gogf/gf/errors/gerror"
 	"github.com/gogf/gf/frame/g"
+	"strings"
 )
 
 //数据库字符串类型
@@ -79,7 +80,7 @@ func IsNotQuery(value string) bool {
 //判断string 是否存在在数组中
 func IsExistInArray(value string, array []string) bool {
 	for _, v := range array {
-		if v == value {
+		if strings.Contains(value, v) {
 			return true
 		}
 	}

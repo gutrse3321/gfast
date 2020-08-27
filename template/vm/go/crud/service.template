@@ -25,11 +25,11 @@ func EditSave(editReq *{{.table.BusinessName}}Model.EditReq) error {
 }
 
 // 根据ID查询
-func GetByID(id int64) (*{{.table.BusinessName}}Model.Entity, error) {
+func GetByID(id int) (*{{.table.BusinessName}}Model.Entity, error) {
 	return {{.table.BusinessName}}Model.GetByID(id)
 }
 
 // 分页查询
-func SelectListByPage(req *{{.table.BusinessName}}Model.SelectPageReq) (total int, page int64, list []*{{.table.BusinessName}}Model.Entity, err error) {
+func SelectListByPage(req *{{.table.BusinessName}}Model.SelectPageReq) (total int, page int, list []*{{.table.BusinessName}}Model.Entity, err error) {
 	return {{.table.BusinessName}}Model.SelectListByPage(req)
 }
