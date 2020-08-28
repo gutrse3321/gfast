@@ -33,7 +33,7 @@ var COLUMNNAME_NOT_QUERY = []string{"id", "create_by", "create_time", "del_flag"
 func SelectDbTableColumnsByName(tableName string) ([]*Entity, error) {
 	db := g.DB()
 	var entity []*Entity
-	sql := " select column_name, (case when (is_nullable = 'no' && column_key != 'PRI') then '1' else null end) as is_required, " +
+	sql := " select column_name, (case when (IS_NULLABLE = 'NO') then '1' else null end) as is_required, " +
 		"(case when column_key = 'PRI' then '1' else '0' end) as is_pk, ordinal_position as sort, column_comment," +
 		" (case when extra = 'auto_increment' then '1' else '0' end) as is_increment, column_type from information_schema.columns" +
 		" where table_schema = (select database()) "

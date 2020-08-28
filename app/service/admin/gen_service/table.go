@@ -200,7 +200,6 @@ func InitColumnField(column *gen_table_column.Entity, table *gen_table.Entity) {
 		column.IsRequired = "0"
 		column.IsInsert = "0"
 	} else {
-		column.IsRequired = "0"
 		column.IsInsert = "1"
 		if strings.Index(columnName, "name") >= 0 || strings.Index(columnName, "status") >= 0 {
 			column.IsRequired = "1"
